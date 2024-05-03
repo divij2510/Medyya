@@ -1,25 +1,24 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:medyya/models/post_model.dart';
-import 'package:medyya/models/profile_model.dart';
 import 'package:medyya/constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:medyya/controllers/post_controller.dart';
 import 'package:intl/intl.dart';
+import 'package:medyya/controllers/notification_controller.dart';
 
 class Post extends StatefulWidget {
   final PostModel post;
   SharedPreferences? p;
-  String? tkn;
+  GetNotifications? gn;
   GetPosts? gp;
   int _l = 0;
   Post(
-      {Key? key,
+      {super.key,
       required this.post,
       required this.p,
-      required this.tkn,
-      required this.gp})
-      : super(key: key) {
+      required this.gn,
+      required this.gp}) {
     _l = post.likes;
   }
 
@@ -28,25 +27,43 @@ class Post extends StatefulWidget {
 }
 
 class _PostState extends State<Post> {
-  IconData _i = Icons.energy_savings_leaf_outlined;
-  bool like = false;
-  Color button_fill = Colors.transparent;
-  Color button_text_color = Colors.teal;
-  String button_text = 'Connect';
+  IconData? _i;
+  bool? like;
+  Color? button_fill;
+  Color? button_text_color;
+  String? button_text;
+  bool connection_button_visibility = false;
+  @override
   void initState() {
-    print(widget.post?.createdAt);
     widget.gp?.check_like(widget.post.id).then((bool_val) {
-      like = bool_val;
-      _i = (!bool_val)
-          ? Icons.energy_savings_leaf
-          : Icons.energy_savings_leaf_outlined;
+      print('$bool_val ${widget.post.user}');
+      if (mounted) {
+        setState(() {
+          like = bool_val;
+          _i = (bool_val) ? Icons.diamond_rounded : Icons.diamond_outlined;
+        });
+      }
+    });
+    widget.gn?.check_connection(username: widget.post.user).then((code) {
+      setState(() {
+        if (code == 302 || code == 208) {
+          connection_button_visibility = false;
+        } else if (code == 404) {
+          connection_button_visibility = true;
+          button_text = 'Connect';
+          button_text_color = Colors.teal;
+          button_fill = Colors.transparent;
+        } else if (code == 102) {
+          connection_button_visibility = true;
+          button_text = 'Requested';
+          button_text_color = Colors.white;
+          button_fill = Colors.teal;
+        }
+      });
     });
   }
 
-  Future<bool> _liked(int id, bool to_like) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('authToken');
-    GetPosts gp = GetPosts(token: token);
+  Future<bool> _liked(int id, bool to_like, GetPosts gp) async {
     bool like = await gp.is_liked(id, to_like);
     return like;
   }
@@ -56,16 +73,16 @@ class _PostState extends State<Post> {
       setState(() {
         like = true;
         widget._l++;
-        _i = Icons.energy_savings_leaf;
+        _i = Icons.diamond_rounded;
       });
-      await _liked(widget.post.id, like);
+      await _liked(widget.post.id, like ?? true, widget.gp!);
     } else {
       setState(() {
         like = false;
         widget._l--;
-        _i = Icons.energy_savings_leaf_outlined;
+        _i = Icons.diamond_outlined;
       });
-      await _liked(widget.post.id, like);
+      await _liked(widget.post.id, like ?? false, widget.gp!);
     }
   }
 
@@ -97,7 +114,7 @@ class _PostState extends State<Post> {
                       ),
                     ),
                     Image.network(
-                      hosting_url + widget.post.profileImage,
+                      widget.post.profileImage,
                       width: 50,
                       height: 50,
                       fit: BoxFit.cover,
@@ -128,46 +145,62 @@ class _PostState extends State<Post> {
                 ],
               ),
               const Spacer(),
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    button_fill = Colors.teal;
-                    button_text_color = Colors.white;
-                    button_text = 'Requested';
-                  });
-                },
-                child: SizedBox(
-                  width: 100,
-                  child: Container(
-                    //padding: EdgeInsets.all(5),
-                    height: 35,
-                    width: 80,
-                    decoration: BoxDecoration(
-                      color: button_fill,
-                      border: Border.all(
-                        color: Colors.teal,
-                        width: 2,
-                      ),
-                      borderRadius: BorderRadius.circular(17),
-                    ),
-                    child: Center(
-                      child: Text(
-                        button_text,
-                        style: TextStyle(
-                          color: button_text_color,
+              connection_button_visibility
+                  ? GestureDetector(
+                      onTap: () async{
+
+                          if(button_text=='Connect'){
+                            setState(() {
+                              button_text = 'Requested';
+                              button_text_color = Colors.white;
+                              button_fill = Colors.teal;
+                            });
+                            await widget.gn!.handle_request(username: widget.post.user, action: 'request');
+                          }
+                          else if(button_text=='Requested'){
+                            setState(() {
+                              button_text = 'Connect';
+                              button_text_color = Colors.teal;
+                              button_fill = Colors.transparent;
+                            });
+                            await widget.gn!.handle_request(username: widget.post.user, action: 'delete');
+                          }
+
+
+                      },
+                      child: SizedBox(
+                        width: 100,
+                        child: Container(
+                          //padding: EdgeInsets.all(5),
+                          height: 35,
+                          width: 80,
+                          decoration: BoxDecoration(
+                            color: button_fill,
+                            border: Border.all(
+                              color: Colors.teal,
+                              width: 2,
+                            ),
+                            borderRadius: BorderRadius.circular(17),
+                          ),
+                          child: Center(
+                            child: Text(
+                              button_text ?? 'Connect',
+                              style: TextStyle(
+                                color: button_text_color,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                ),
-              ),
+                    )
+                  : const SizedBox(),
               const SizedBox(width: 20)
             ],
           ),
           const SizedBox(height: 10),
           Center(
             child: Image.network(
-              hosting_url + widget.post.postImage,
+              media_url + widget.post.postImage,
               width: 373,
               fit: BoxFit.fitWidth,
               loadingBuilder: (context, child, loadingProgress) {

@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_overlay_loader/flutter_overlay_loader.dart';
 import 'package:http/http.dart' as http;
 import 'package:medyya/pages/register.dart';
 import 'dart:convert';
@@ -8,7 +9,6 @@ import './home.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:medyya/constants.dart';
 //import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -23,14 +23,13 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _password_controller = TextEditingController();
   final TextEditingController _email_controller = TextEditingController();
   var _message = '';
-  var _button_background = pink400;
+  var _button_background = pink700;
   bool is_valid = true;
   Future<void> _login() async {
     var username = _username_controller.text.trim();
     var password = _password_controller.text.trim();
     var email = _email_controller.text.trim();
-    Uri uri = Uri.parse(
-        hosting_url + '/api/users/login/');
+    Uri uri = Uri.parse(hosting_url + '/api/users/login/');
     final _res = await http.post(uri,
         body: jsonEncode(
             {"username": username.toString(), "password": password.toString()}),
@@ -74,12 +73,19 @@ class _LoginPageState extends State<LoginPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text('Welcome Back, you were missed!  '),
+                  const Text('Welcome Back, you were missed!  ', style: TextStyle(fontSize: 15),),
                   GestureDetector(
-                    onTap: (){
-                      Navigator.push(context, MaterialPageRoute(builder: (context){return SignupPage();}));
+                    onTap: () {
+                      Navigator.push(context,
+                          MaterialPageRoute(builder: (context) {
+                        return const SignupPage();
+                      }));
                     },
-                    child: const Text('Signup', style: TextStyle(color: Colors.teal, fontWeight: FontWeight.w500),),
+                    child: const Text(
+                      'Signup',
+                      style: TextStyle(
+                          color: Colors.teal, fontWeight: FontWeight.w500, fontSize: 15),
+                    ),
                   ),
                 ],
               ),
@@ -99,20 +105,28 @@ class _LoginPageState extends State<LoginPage> {
               GestureDetector(
                 onTapDown: (_) {
                   setState(() {
-                    _button_background = pink700;
+                    _button_background = darkpink;
                   });
                 },
                 onTapCancel: () {
                   setState(() {
-                    _button_background = pink400;
+                    _button_background = pink700;
                   });
                 },
                 onTap: () async {
-                  await _login();
-                  if (is_valid) {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) {
-                      return HomePage();
-                    }));
+                  Loader.show(context,
+                      progressIndicator:
+                          CircularProgressIndicator(color: darkpink));
+                  try {
+                    await _login();
+                    if (is_valid) {
+                      Navigator.pushReplacement(context,
+                          MaterialPageRoute(builder: (context) {
+                        return const HomePage();
+                      }));
+                    }
+                  } finally {
+                    Loader.hide();
                   }
                 },
                 child: Container(
@@ -128,7 +142,7 @@ class _LoginPageState extends State<LoginPage> {
                       'LOGIN',
                       style: TextStyle(
                         fontSize: 20,
-                        fontWeight: FontWeight.w300,
+                        fontWeight: FontWeight.w700,
                         color: lightpink,
                       ),
                     ),

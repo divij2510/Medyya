@@ -4,11 +4,13 @@ class MyTextField extends StatelessWidget {
   final TextEditingController controller;
   final String hintText;
   final bool obscureText;
+
   const MyTextField(
       {super.key,
       required this.controller,
       required this.hintText,
-      required this.obscureText});
+      required this.obscureText,
+      });
 
   @override
   Widget build(BuildContext context) {
@@ -26,14 +28,14 @@ class MyTextField extends StatelessWidget {
         ),
         focusColor: Colors.pink[200],
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(10)),
+          borderRadius: const BorderRadius.all(Radius.circular(10)),
           borderSide: BorderSide(
             width: 3,
             color: Colors.pink.shade200,
           ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(10)),
+          borderRadius: const BorderRadius.all(Radius.circular(10)),
           borderSide: BorderSide(
               width:2.2,
             color: Colors.pink.shade100,)

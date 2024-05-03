@@ -7,7 +7,7 @@ class GetPosts{
   GetPosts({required this.token});
 
   Future<List<PostModel>> get_posts() async{
-    final Uri uri = Uri.parse(hosting_url + '/api/posts/view/all/');
+    final Uri uri = Uri.parse('$hosting_url/api/posts/view/all/');
     final res = await http.get(
         uri,
         headers: {'Content-Type':'application/json', "Authorization":"Token $token"}
@@ -26,10 +26,10 @@ class GetPosts{
   Future<bool> is_liked(int id, bool to_like) async{
     Uri uri=Uri.parse('');
     if(to_like==true) {
-      uri = Uri.parse(hosting_url + '/api/posts/like/$id/');
+      uri = Uri.parse('$hosting_url/api/posts/like/$id/');
     }
     else{
-      uri = Uri.parse(hosting_url + '/api/posts/unlike/$id/');
+      uri = Uri.parse('$hosting_url/api/posts/unlike/$id/');
     }
 
     final res = await http.post(
@@ -46,7 +46,7 @@ class GetPosts{
   }
 
   Future<bool> check_like(int id) async{
-    final Uri uri = Uri.parse(hosting_url + '/api/posts/check-like/$id/');
+    final Uri uri = Uri.parse('$hosting_url/api/posts/check-like/$id/');
     final res = await http.get(
       uri,
       headers: {'Content-Type':'application/json', "Authorization":"Token $token"},
@@ -55,6 +55,30 @@ class GetPosts{
       return true;
     }
     else{
+      return false;
+    }
+  }
+  Future<bool> make_post({required String bio, required String pickedImagePath}) async {
+    final Uri uri = Uri.parse('$hosting_url/api/posts/create/');
+    var request = http.MultipartRequest('POST', uri);
+    if(pickedImagePath=='')
+      {
+        return false;
+      }
+    request.fields['caption'] = bio;
+    request.files.add(
+      await http.MultipartFile.fromPath(
+        'post_image', // Field name for the image file
+        pickedImagePath,
+      ),
+    );
+    request.headers['Authorization'] = 'Token $token';
+    var response = await http.Response.fromStream(await request.send());
+
+    if (response.statusCode == 201) {
+      return true;
+    } else {
+      print(response.reasonPhrase);
       return false;
     }
   }

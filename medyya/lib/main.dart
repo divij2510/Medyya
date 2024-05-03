@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:medyya/pages/home.dart';
+import 'package:medyya/pages/splash_screen.dart';
 //import 'package:flutter/widgets.dart';
 import './pages/login.dart';
 // import './pages/register.dart';
@@ -24,7 +25,8 @@ class Myapp extends StatelessWidget {
               TextStyle(fontWeight: FontWeight.w400, color: Colors.pink[900]),
         ),
       ),
-      home: HomePage(),
+      home: const SplashScreen(),
+
     );
   }
 }

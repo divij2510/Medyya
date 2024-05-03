@@ -1,5 +1,6 @@
 // import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_overlay_loader/flutter_overlay_loader.dart';
 // import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
 import 'package:medyya/main.dart';
@@ -22,7 +23,7 @@ class _SignupPageState extends State<SignupPage> {
   final TextEditingController _password_controller = TextEditingController();
   final TextEditingController _email_controller = TextEditingController();
   var _message = 'Enter all the details';
-  var _button_background = pink400;
+  var _button_background = pink700;
   bool is_valid = true;
 
   Future<void> _signup() async {
@@ -74,12 +75,12 @@ class _SignupPageState extends State<SignupPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text('Create a new account,  '),
+                  const Text('Create a new account,  ', style: TextStyle(fontSize: 15),),
                   GestureDetector(
                     onTap: (){
-                      Navigator.push(context, MaterialPageRoute(builder: (context){return LoginPage();}));
+                      Navigator.push(context, MaterialPageRoute(builder: (context){return const LoginPage();}));
                     },
-                    child: const Text('Login', style: TextStyle(color: Colors.teal, fontWeight: FontWeight.w500),),
+                    child: const Text('Login', style: TextStyle(color: Colors.teal, fontWeight: FontWeight.w500, fontSize: 15),),
                   ),
                 ],
               ),
@@ -105,21 +106,27 @@ class _SignupPageState extends State<SignupPage> {
               GestureDetector(
                 onTapDown: (_) {
                   setState(() {
-                    _button_background = pink700;
+                    _button_background = darkpink;
                   });
                 },
                 onTapCancel: () {
                   setState(() {
-                    _button_background = pink400;
+                    _button_background = pink700;
                   });
                 },
                 onTap: () async{
-                  await _signup();
-                  if(is_valid){
-                  Navigator.push(context, MaterialPageRoute(builder: (context) {
-                    return const LoginPage();
-                  }));
-                }},
+                  Loader.show(context, progressIndicator: CircularProgressIndicator(color: darkpink,));
+                  try{
+                    await _signup();
+                    if(is_valid){
+                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
+                        return const LoginPage();
+                      }));
+                  }}finally{
+                      Loader.hide();
+                  }
+
+                },
                 child: Container(
                   height: 60,
                   width: 500,
@@ -133,7 +140,7 @@ class _SignupPageState extends State<SignupPage> {
                       'SIGN UP',
                       style: TextStyle(
                         fontSize: 20,
-                        fontWeight: FontWeight.w300,
+                        fontWeight: FontWeight.w700,
                         color: lightpink,
                       ),
                     ),
