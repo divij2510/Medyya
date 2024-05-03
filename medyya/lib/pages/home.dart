@@ -32,7 +32,6 @@ class _HomePageState extends State<HomePage> {
   GetProfile? gpr;
   int selected_index = 1;
 
-
   Future<List<PostModel>> fetch_posts({required GetPosts? gp}) async {
     posts = (await gp?.get_posts()) ?? [];
     if (posts.isEmpty) {
@@ -55,12 +54,10 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       //toggle rebuild
     });
-    if(profile?.firstName==''||profile?.lastName=='')
-    {
-      Navigator.pushReplacement(context,
-          MaterialPageRoute(builder: (context) {
-            return UpdateProfilePage(profile: profile!, gpr: gpr!);
-          }));
+    if (profile?.firstName == '' || profile?.lastName == '') {
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
+        return UpdateProfilePage(profile: profile!, tkn:tkn);
+      }));
     }
     return profile;
   }
@@ -323,7 +320,7 @@ class _HomePageState extends State<HomePage> {
                                     lastName: 'default',
                                     profilePicture: '',
                                     username: 'default'),
-                            gpr: gpr ?? GetProfile(token: 'default'));
+                            tkn: tkn);
                       }));
                     },
                   ),
@@ -362,14 +359,29 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
         body: (selected_index == 1)
-            ? ListView.builder(
-                itemCount: posts.length,
-                itemBuilder: (BuildContext context, int index) {
-                  return Post(post: posts[index], gp: gp, p: p, gn: gn,);
+            ? RefreshIndicator(
+                onRefresh: () {
+                  return fetch_posts(gp: gp);
                 },
-                addAutomaticKeepAlives: true,
-                cacheExtent: 1600,
+                color: darkpink,
+
+                child: ListView.builder(
+                  itemCount: posts.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    return Post(
+                      post: posts[index],
+                      gp: gp,
+                      tkn: tkn,
+                      gn: gn,
+                      myprofile: profile,
+                    );
+                  },
+                  addAutomaticKeepAlives: true,
+                  cacheExtent: 1600,
+                ),
               )
-            : (selected_index == 0)?CreatePost(gp: gp):ConnectionPage(tkn: tkn));
+            : (selected_index == 0)
+                ? CreatePost(gp: gp)
+                : ConnectionPage(tkn: tkn));
   }
 }

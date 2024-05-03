@@ -23,7 +23,7 @@ class GetPosts{
     }
 
   }
-  Future<bool> is_liked(int id, bool to_like) async{
+  Future<bool> like({required int id, required bool to_like}) async{
     Uri uri=Uri.parse('');
     if(to_like==true) {
       uri = Uri.parse('$hosting_url/api/posts/like/$id/');
@@ -44,7 +44,6 @@ class GetPosts{
         return false;
     }
   }
-
   Future<bool> check_like(int id) async{
     final Uri uri = Uri.parse('$hosting_url/api/posts/check-like/$id/');
     final res = await http.get(

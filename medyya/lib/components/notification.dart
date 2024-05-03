@@ -4,14 +4,17 @@ import 'package:flutter/widgets.dart';
 import 'package:medyya/constants.dart';
 import 'package:medyya/controllers/notification_controller.dart';
 
+import '../pages/profile_page.dart';
+import '../pages/update_profile.dart';
+
 class MyNotification extends StatefulWidget {
   final NotificationModel notification;
-  final GetNotifications gn;
+  final String tkn;
   final Function(NotificationModel) pop_notification;
   const MyNotification(
       {super.key,
       required this.notification,
-      required this.gn,
+      required this.tkn,
       required this.pop_notification});
 
   @override
@@ -21,7 +24,7 @@ class MyNotification extends StatefulWidget {
 class _MyNotificationState extends State<MyNotification> {
   Future<void> _connection_action({required action, required username}) async {
     bool completed =
-        await widget.gn.handle_request(action: action, username: username);
+        await GetNotifications(token: widget.tkn).handle_request(action: action, username: username);
     if (completed) {
       widget.pop_notification(widget.notification);
     }
@@ -74,11 +77,19 @@ class _MyNotificationState extends State<MyNotification> {
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '${widget.notification.firstName} ${widget.notification.lastName}',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 21,
+                GestureDetector(
+                  onTap: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context) {
+                        return ProfilePage(
+                            tkn: widget.tkn, username: widget.notification.username);
+                      }));
+                  },
+                  child: Text(
+                    '${widget.notification.firstName} ${widget.notification.lastName}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 21,
+                    ),
                   ),
                 ),
                 Text('@${widget.notification.username}'),

@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:medyya/constants.dart';
 import '../controllers/notification_controller.dart';
 import 'package:medyya/components/notification.dart';
 
@@ -24,11 +25,10 @@ class _ConnectionPageState extends State<ConnectionPage> {
     });
   }
 
-  void _pop_notification(notification){
+  void _pop_notification(notification) {
     setState(() {
       notifications.remove(notification);
     });
-
   }
 
   @override
@@ -40,38 +40,49 @@ class _ConnectionPageState extends State<ConnectionPage> {
 
   @override
   Widget build(BuildContext context) {
-    return (notifications.isEmpty)
-        ? const Center(child: Text('No Pending Requests', style: TextStyle(
-        fontSize: 24, fontWeight: FontWeight.w300)))
-        : Column(
-            children: [
-              Card(
-                shape: const Border(),
-                elevation: 0.5,
-                child: Row(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(11.0),
-                      child: Text(
-                        'Connection Requests (${notifications.length})',
-                        style: const TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.w500),
-                      ),
+    return RefreshIndicator(
+      color: darkpink,
+        onRefresh: () async{
+          await get_notifications(gn: gn);
+        },
+        child: (notifications.isEmpty)
+            ? const Center(
+                child: Text('No Pending Requests',
+                    style:
+                        TextStyle(fontSize: 24, fontWeight: FontWeight.w300)))
+            : Column(
+                children: [
+                  Card(
+                    shape: const Border(),
+                    elevation: 0.5,
+                    child: Row(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(11.0),
+                          child: Text(
+                            'Connection Requests (${notifications.length})',
+                            style: const TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: notifications.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    return MyNotification(gn: gn!,notification: notifications[index], pop_notification: _pop_notification,);
-                  },
-                  addAutomaticKeepAlives: true,
-                  cacheExtent: 1000,
-                ),
-              )
-            ],
-          );
+                  ),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: notifications.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        return MyNotification(
+                          tkn: widget.tkn,
+                          notification: notifications[index],
+                          pop_notification: _pop_notification,
+                        );
+                      },
+                      addAutomaticKeepAlives: true,
+                      cacheExtent: 900,
+                    ),
+                  )
+                ],
+              ));
   }
 }

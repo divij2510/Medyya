@@ -13,9 +13,9 @@ import 'package:medyya/controllers/profile_controller.dart';
 
 class UpdateProfilePage extends StatefulWidget {
   final UserProfile profile;
-  final GetProfile gpr;
+  final String tkn;
   const UpdateProfilePage(
-      {super.key, required this.profile, required this.gpr});
+      {super.key, required this.profile, required this.tkn});
 
   @override
   State<UpdateProfilePage> createState() {
@@ -28,7 +28,7 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
   final TextEditingController _firstname_controller = TextEditingController();
   final TextEditingController _lastname_controller = TextEditingController();
   final TextEditingController _bio_controller = TextEditingController();
-  var _button_background = pink400;
+  var _button_background = pink700;
   bool isTapped = false;
   String pickedImagePath = '';
   bool isLoading = false;
@@ -172,21 +172,21 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
                   ),
                   const SizedBox(height: 30),
                   GestureDetector(
-                    onTapDown: (_) {
+                    onTapDown: (_){
+                      setState(() {
+                        _button_background = darkpink;
+                    });},
+                    onTapCancel: () {
                       setState(() {
                         _button_background = pink700;
                       });
                     },
-                    onTapCancel: () {
-                      setState(() {
-                        _button_background = pink400;
-                      });
-                    },
                     onTap: () async {
                         setState(() {
+                          _button_background = darkpink;
                           isLoading = true;
                         });
-                        await widget.gpr.updateUserProfile(
+                        await GetProfile(token: widget.tkn).updateUserProfile(
                           UserProfile(
                             username: _username_controller.text.trim(),
                             firstName: _firstname_controller.text.trim(),
@@ -221,7 +221,7 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
                           'UPDATE PROFILE',
                           style: TextStyle(
                             fontSize: 20,
-                            fontWeight: FontWeight.w300,
+                            fontWeight: FontWeight.w700,
                             color: lightpink,
                           ),
                         ),

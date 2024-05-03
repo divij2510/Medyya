@@ -1,26 +1,28 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:medyya/models/post_model.dart';
 import 'package:medyya/constants.dart';
+import 'package:medyya/models/profile_model.dart';
+import 'package:medyya/pages/update_profile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:medyya/controllers/post_controller.dart';
 import 'package:intl/intl.dart';
 import 'package:medyya/controllers/notification_controller.dart';
+import 'package:medyya/pages/profile_page.dart';
 
 class Post extends StatefulWidget {
   final PostModel post;
-  SharedPreferences? p;
+  final UserProfile? myprofile;
   GetNotifications? gn;
+  final String tkn;
   GetPosts? gp;
-  int _l = 0;
   Post(
       {super.key,
       required this.post,
-      required this.p,
+      required this.tkn,
       required this.gn,
-      required this.gp}) {
-    _l = post.likes;
-  }
+      required this.gp, required this.myprofile});
 
   @override
   _PostState createState() => _PostState();
@@ -28,18 +30,22 @@ class Post extends StatefulWidget {
 
 class _PostState extends State<Post> {
   IconData? _i;
-  bool? like;
+  bool? isLiked;
   Color? button_fill;
   Color? button_text_color;
   String? button_text;
   bool connection_button_visibility = false;
+  int? _likes;
   @override
   void initState() {
+    super.initState();
+    setState(() {
+      _likes = widget.post.likes;
+    });
     widget.gp?.check_like(widget.post.id).then((bool_val) {
-      print('$bool_val ${widget.post.user}');
       if (mounted) {
         setState(() {
-          like = bool_val;
+          isLiked = bool_val;
           _i = (bool_val) ? Icons.diamond_rounded : Icons.diamond_outlined;
         });
       }
@@ -61,29 +67,6 @@ class _PostState extends State<Post> {
         }
       });
     });
-  }
-
-  Future<bool> _liked(int id, bool to_like, GetPosts gp) async {
-    bool like = await gp.is_liked(id, to_like);
-    return like;
-  }
-
-  void _likePost() async {
-    if (like == false) {
-      setState(() {
-        like = true;
-        widget._l++;
-        _i = Icons.diamond_rounded;
-      });
-      await _liked(widget.post.id, like ?? true, widget.gp!);
-    } else {
-      setState(() {
-        like = false;
-        widget._l--;
-        _i = Icons.diamond_outlined;
-      });
-      await _liked(widget.post.id, like ?? false, widget.gp!);
-    }
   }
 
   @override
@@ -131,42 +114,57 @@ class _PostState extends State<Post> {
                 ),
               ),
               const SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.post.fullName,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 21,
+              GestureDetector(
+                onTap: () {
+                  if(widget.post.user==widget.myprofile?.username)
+                  {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) {
+                      return UpdateProfilePage(tkn: widget.tkn,profile: widget.myprofile!);
+                    }));
+                  }
+                  else{
+                    Navigator.push(context, MaterialPageRoute(builder: (context) {
+                      return ProfilePage(
+                          tkn: widget.tkn, username: widget.post.user);
+                    }));
+                  }
+
+                },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.post.fullName,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 21,
+                      ),
                     ),
-                  ),
-                  Text('@${widget.post.user}'),
-                ],
+                    Text('@${widget.post.user}'),
+                  ],
+                ),
               ),
               const Spacer(),
               connection_button_visibility
                   ? GestureDetector(
-                      onTap: () async{
-
-                          if(button_text=='Connect'){
-                            setState(() {
-                              button_text = 'Requested';
-                              button_text_color = Colors.white;
-                              button_fill = Colors.teal;
-                            });
-                            await widget.gn!.handle_request(username: widget.post.user, action: 'request');
-                          }
-                          else if(button_text=='Requested'){
-                            setState(() {
-                              button_text = 'Connect';
-                              button_text_color = Colors.teal;
-                              button_fill = Colors.transparent;
-                            });
-                            await widget.gn!.handle_request(username: widget.post.user, action: 'delete');
-                          }
-
-
+                      onTap: () async {
+                        if (button_text == 'Connect') {
+                          setState(() {
+                            button_text = 'Requested';
+                            button_text_color = Colors.white;
+                            button_fill = Colors.teal;
+                          });
+                          await widget.gn!.handle_request(
+                              username: widget.post.user, action: 'request');
+                        } else if (button_text == 'Requested') {
+                          setState(() {
+                            button_text = 'Connect';
+                            button_text_color = Colors.teal;
+                            button_fill = Colors.transparent;
+                          });
+                          await widget.gn!.handle_request(
+                              username: widget.post.user, action: 'delete');
+                        }
                       },
                       child: SizedBox(
                         width: 100,
@@ -228,12 +226,35 @@ class _PostState extends State<Post> {
             children: [
               const SizedBox(width: 10),
               GestureDetector(
-                onTap: _likePost,
-                child: Icon(_i, size: 40, color: darkpink),
+                onTap: () async {
+                  if (isLiked ?? false) {
+                    setState(() {
+                      _i = Icons.diamond_outlined;
+                      if (_likes != widget.post.likes - 1 && _likes != null) {
+                        _likes = _likes! - 1;
+                      }
+                      isLiked = false;
+                    });
+                  } else {
+                    setState(() {
+                      _i = Icons.diamond_rounded;
+                      if (_likes != widget.post.likes + 1 && _likes != null) {
+                        _likes = _likes! + 1;
+                      }
+                      isLiked = true;
+                    });
+                  }
+                  await widget.gp
+                      ?.like(id: widget.post.id, to_like: (isLiked ?? false));
+                },
+                child: Icon(_i ?? Icons.diamond_outlined,
+                    size: 40, color: darkpink),
               ),
               const SizedBox(width: 10),
               Text(
-                '${widget._l} ${widget._l == 1 ? 'like' : 'likes'}',
+                _likes == null
+                    ? '${widget.post.likes} ${widget.post.likes == 1 ? 'like' : 'likes'}'
+                    : '$_likes ${_likes == 1 ? 'like' : 'likes'}',
                 style: const TextStyle(fontSize: 18),
               ),
             ],
